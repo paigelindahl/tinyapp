@@ -10,8 +10,8 @@ const {response, request} = require("express");
 app.use(bodyParser.urlencoded({extended: true}));
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "userRandomID"},
+  "9sm5xK": {longURL: "http://www.google.com", userID: 'user2RandomID'}
 };
 
 const users = { 
@@ -67,9 +67,6 @@ app.post("/urls", (req, res) => {
     longURL: req.body["longURL"], 
     userID: req.cookies['user_id'],
   }
-  // urlDatabase[shortURL] = req.body["longURL"];
-  // urlDatabase[shortURL] = userID[req.cookies["user_id"]];
-  // console.log('this should be it', urlDatabase[shortURL]);
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -121,13 +118,11 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  console.log(req);
   const templateVars = {
     shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL.longURL], 
+    longURL: urlDatabase[req.params.shortURL].longURL, 
     user : users[req.cookies["user_id"]]
   };
-  console.log('this should be long URL', urlDatabase[req.params.shortURL.longURL])
   res.render("urls_show", templateVars);
 });
 
