@@ -107,15 +107,20 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
+//allows user to delete their own urls
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const urlId = req.params.shortURL;
-  delete urlDatabase[urlId];
-  res.redirect("/urls");
+  const cookieID= req.cookies["user_id"];
+  const shortURL = req.params["shortURL"];
+  if (cookieID === urlDatabase[shortURL]["userID"]) {
+    delete urlDatabase[shortURL];
+    return res.redirect("/urls");
+  } else {
+    return res.status(403).send('This is not your URL to change.');
+  }
 });
 
 //edits longURL if user's own data
 app.post("/urls/:id", (req, res) => {
-  // const userURLs = urlsForUser(req.cookies["user_id"]);
   const userID = req.cookies["user_id"];
   const urlsID = urlDatabase[req.params.id]["userID"]
   if (urlsID === userID) {
@@ -125,7 +130,6 @@ app.post("/urls/:id", (req, res) => {
     res.status(403).send('This is not your URL to change.')
   }
 });
-
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
