@@ -33,7 +33,7 @@ function generateRandomString() {
 };
 
 app.post("/register", (req, res) => {
-  if (req.body.email === '') {
+  if (req.body.email === '' || req.body.password === '') {
     res.status(400).send('Please enter an email/password');
   } 
   
@@ -57,7 +57,6 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); 
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body["longURL"];
   res.redirect(`/urls/${shortURL}`);
@@ -75,6 +74,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  console.log('this is req.body', req.body);
   // res.cookie('username',req.body.username);
   res.redirect('/urls');
 });
@@ -123,7 +123,15 @@ app.get("/register", (req, res) => {
     user: users[req.cookies["user_id"]]
   };
   res.render("registration", templateVars);
-})
+});
+
+app.get('/login', (req, res) => {
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.cookies["user_id"]]
+  };
+  res.render('login', templateVars);
+});
 
 app.get('/urls', (req, res) => {
   const templateVars = {
