@@ -32,30 +32,33 @@ function generateRandomString() {
   return Math.random().toString(20).substr(2, 6);
 };
 
+const isEmailThere = (email) => {
+  for (let user in users) {
+    if (users[user].email === email) {
+      return user;
+    }
+  }
+  return false;
+};
+
 
 
 app.post("/register", (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
     res.status(400).send('Please enter an email/password');
-  } 
-  
-  for (let userId in users) {
-    const user = users[userId];
-    if (user.email === req.body.email) {
-      res.status(400).send('Email already registered');
-    }
-  };
+  } else if (isEmailThere(req.body.email)) {
+    res.status(400).send('Please enter an email/password');
+  } else {
+    let newUserId = generateRandomString();
 
-  
-  let newUserId = generateRandomString();
-
-  users[newUserId] = {
-    id: newUserId,
-    email: req.body.email,
-    password: req.body.password
-  };
-  res.cookie('user_id', newUserId);
-  res.redirect("/urls");
+    users[newUserId] = {
+      id: newUserId,
+      email: req.body.email,
+      password: req.body.password
+    };
+    res.cookie('user_id', newUserId);
+    res.redirect("/urls");
+  }
 });
 
 app.post("/urls", (req, res) => {
@@ -76,14 +79,22 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
   for (let userId in users) {
-    const user = users[userId];
-    if (user.email === req.body.email && user.password === req.body.password) {
-      res.cookie('user_id', userId);
-      res.redirect('/urls');
-     } 
+    // const user = users[userId];
+    if (!isEmailThere(email)) {
+      return res.status(403).send('The email you provided is incorrect');
+    } else {
+      const id = isEmailThere(email);
+      if (users[id].password !== password) {
+        return res.status(403).send('The password you provided is incorrect');
+      } else {
+        res.cookie('user_id', id);
+        return res.redirect('/urls');
+      }
     }
-    res.status(403).send('The email/password you provided is incorrect');
+    }
   });
 
 
