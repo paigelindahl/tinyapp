@@ -77,7 +77,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id]=req.body.newLongURL;
+  urlDatabase[req.params.id]["longURL"]=req.body.newLongURL;
   res.redirect("/urls");
 });
 
@@ -85,7 +85,6 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   for (let userId in users) {
-    // const user = users[userId];
     if (!isEmailThere(email)) {
       return res.status(403).send('The email you provided is incorrect');
     } else {
@@ -117,6 +116,7 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+//creates record of short url and long url for that user
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL, 
@@ -126,8 +126,9 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-app.get("/u/:shortURL", (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+//reroutes to longurl with shorturl link
+app.get("/u/:shortURL", (req, res) => { 
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
