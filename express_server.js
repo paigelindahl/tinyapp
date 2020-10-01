@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 app.use(cookieParser());
 const PORT = 8080; 
 app.set("view engine", "ejs");
+const bcrypt = require('bcrypt');
 
 const bodyParser = require("body-parser");
 const {response, request} = require("express");
@@ -18,12 +19,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "pass"
+    password: bcrypt.hashSync("pass", 10)
   },
  "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "dishwasher-funk"
+    password: bcrypt.hashSync("dishwasher-funk", 10)
   }
 };
 
@@ -62,11 +63,12 @@ app.post("/register", (req, res) => {
     res.status(400).send('Please enter an email/password');
   } else {
     let newUserId = generateRandomString();
+    const hashedPassword = bcrypt.hashSync(req.body.password, 10);
 
     users[newUserId] = {
       id: newUserId,
       email: req.body.email,
-      password: req.body.password
+      password: hashedPassword
     };
     res.cookie('user_id', newUserId);
     res.redirect("/urls");
@@ -77,14 +79,15 @@ app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   for (let userId in users) {
+    console.log('this should be the hashed', users[userId]["password"]);
     if (!isEmailThere(email)) {
       return res.status(403).send('The email you provided is incorrect');
     } else {
       const id = isEmailThere(email);
-      if (users[id].password !== password) {
+      const passwordMatcher = bcrypt.compareSync(req.body.password, users[userId]["password"]);
+      if (!passwordMatcher) {
         return res.status(403).send('The password you provided is incorrect');
       } else {
-        console.log('this is id', id);
         res.cookie('user_id', id);
         return res.redirect('/urls');
       }
@@ -131,17 +134,6 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
-app.get("/urls/new", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
-  if (req.cookies['user_id']) {
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect("/login");
-  }
-});
-
 app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.cookies["user_id"]]
@@ -171,6 +163,20 @@ app.get('/urls', (req, res) => {
     res.redirect("/register");
   }
 });
+
+
+app.get("/urls/new", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  if (req.cookies['user_id']) {
+    res.render("urls_new", templateVars);
+  } else {
+    res.redirect("/login");
+  }
+});
+
+
 
 //creates record of short url and long url for that user
 app.get("/urls/:shortURL", (req, res) => {
