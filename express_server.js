@@ -18,7 +18,7 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: "pass"
   },
  "user2RandomID": {
     id: "user2RandomID", 
@@ -29,15 +29,15 @@ const users = {
 
 // function looks up individuals id and their specific urls
 const urlsForUser = (id) => {
-  const userDataBase = {};
+  const userDatabase = {};
   for (let key in urlDatabase){
     if (urlDatabase[key].userID === id){
-      userDataBase[key] = {
+      userDatabase[key] = {
         longURL: urlDatabase[key].longURL,
         userID: id }
     } 
   }
-  return userDataBase;
+  return userDatabase;
 };
 
 //creates random id number
@@ -54,8 +54,6 @@ const isEmailThere = (email) => {
   }
   return false;
 };
-
-
 
 app.post("/register", (req, res) => {
   if (req.body.email === '' || req.body.password === '') {
@@ -75,32 +73,6 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
-  urlDatabase[shortURL] = {
-    longURL: req.body["longURL"], 
-    userID: req.cookies['user_id'],
-  }
-  res.redirect(`/urls/${shortURL}`);
-});
-
-app.post("/urls/:shortURL/delete", (req, res) => {
-  const urlId = req.params.shortURL;
-  delete urlDatabase[urlId];
-  res.redirect("/urls");
-});
-
-//edits longURL 
-app.post("/urls/:id", (req, res) => {
-  console.log('this is req params', req.params);
-  // const shortURL = req.params.id;
-  console.log(req.body.newLongURL);
-  console.log(urlDatabase[req.params.id]);
-  urlDatabase[req.params.id]["longURL"]=req.body.newLongURL;
-  res.redirect('/urls');
-});
-
-
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -112,6 +84,7 @@ app.post("/login", (req, res) => {
       if (users[id].password !== password) {
         return res.status(403).send('The password you provided is incorrect');
       } else {
+        console.log('this is id', id);
         res.cookie('user_id', id);
         return res.redirect('/urls');
       }
@@ -120,10 +93,39 @@ app.post("/login", (req, res) => {
 });
 
 
+app.post("/urls", (req, res) => {
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = {
+    longURL: req.body["longURL"], 
+    userID: req.cookies['user_id'],
+  }
+  res.redirect(`/urls/${shortURL}`);
+});
+
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
   res.redirect("/urls");
 });
+
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const urlId = req.params.shortURL;
+  delete urlDatabase[urlId];
+  res.redirect("/urls");
+});
+
+//edits longURL if user's own data
+app.post("/urls/:id", (req, res) => {
+  // const userURLs = urlsForUser(req.cookies["user_id"]);
+  const userID = req.cookies["user_id"];
+  const urlsID = urlDatabase[req.params.id]["userID"]
+  if (urlsID === userID) {
+     urlDatabase[req.params.id]["longURL"]=req.body.newLongURL;
+    return res.redirect('/urls');
+  } else {
+    res.status(403).send('This is not your URL to change.')
+  }
+});
+
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -168,6 +170,7 @@ app.get('/urls', (req, res) => {
 
 //creates record of short url and long url for that user
 app.get("/urls/:shortURL", (req, res) => {
+  console.log(urlsForUser(req.cookies["user_id"]));
   const templateVars = {
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL, 
