@@ -8,10 +8,11 @@ app.use(cookieSession({
 const PORT = 8080; 
 app.set("view engine", "ejs");
 const bcrypt = require('bcrypt');
-
 const bodyParser = require("body-parser");
 const {response, request} = require("express");
 app.use(bodyParser.urlencoded({extended: true}));
+const { getUserByEmail, generateRandomString, urlsForUser } = require('./helpers');
+
 
 const urlDatabase = {
   "b2xVn2": {longURL: "http://www.lighthouselabs.ca", userID: "userRandomID"},
@@ -29,34 +30,6 @@ const users = {
     email: "user2@example.com", 
     password: bcrypt.hashSync("dishwasher-funk", 10)
   }
-};
-
-// function looks up individuals id and their specific urls
-const urlsForUser = (id) => {
-  const userDatabase = {};
-  for (let key in urlDatabase){
-    if (urlDatabase[key].userID === id){
-      userDatabase[key] = {
-        longURL: urlDatabase[key].longURL,
-        userID: id }
-    } 
-  }
-  return userDatabase;
-};
-
-//creates random id number
-function generateRandomString() {
-  return Math.random().toString(20).substr(2, 6);
-};
-
-//checks if users email is already registered
-const getUserByEmail = (email, users) => {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return user;
-    }
-  }
-  return false;
 };
 
 app.post("/register", (req, res) => {
@@ -97,7 +70,7 @@ app.post("/login", (req, res) => {
   }
 });
 
-
+//creates new shortened URL
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = {
@@ -151,11 +124,11 @@ app.get('/login', (req, res) => {
   res.render('login', templateVars);
 });
 
+//
 app.get('/urls', (req, res) => {
-
     if (req.session.user_id) {
     const userID = req.session.user_id;
-    const userURLs = urlsForUser(userID);
+    const userURLs = urlsForUser(userID, urlDatabase);
     const templateVars = {
       urls: userURLs,
       user: users[req.session.user_id]
@@ -165,7 +138,6 @@ app.get('/urls', (req, res) => {
     res.redirect("/register");
   }
 });
-
 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
@@ -177,8 +149,6 @@ app.get("/urls/new", (req, res) => {
     res.redirect("/login");
   }
 });
-
-
 
 //creates record of short url and long url for that user
 app.get("/urls/:shortURL", (req, res) => {
@@ -195,7 +165,6 @@ app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
-
 
 
 app.get("/", (req, res) => {
@@ -217,5 +186,6 @@ app.get('*', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
 
 
