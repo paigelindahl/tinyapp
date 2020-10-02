@@ -8,21 +8,20 @@ const getUserByEmail = (email, users) => {
   return false;
 };
 
-
 //creates random id number
-function generateRandomString() {
+const generateRandomString = function() {
   return Math.random().toString(20).substr(2, 6);
 };
 
 // function looks up individuals id and their specific urls
 const urlsForUser = (id, database) => {
   const userDatabase = {};
-  for (let key in database){
-    if (database[key].userID === id){
+  for (let key in database) {
+    if (database[key].userID === id) {
       userDatabase[key] = {
-      longURL: database[key].longURL,
-      userID: id }
-    } 
+        longURL: database[key].longURL,
+        userID: id };
+    }
   }
   return userDatabase;
 };
